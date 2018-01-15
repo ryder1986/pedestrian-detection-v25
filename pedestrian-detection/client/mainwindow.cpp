@@ -42,8 +42,8 @@ void MainWindow::on_pushButton_search_clicked()
 
     search_widget->setGeometry((this->width()-w)/2+x,(this->height()-h)/2+y,w,h);
     search_widget->clear_text();
+     search_widget->setWindowFlags(Qt::WindowStaysOnTopHint);
     search_widget->show();
-
 
     //  char buf[2000];
     searcher->search_device();

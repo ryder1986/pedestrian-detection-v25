@@ -26,7 +26,7 @@ public:
     }
     void start()
     {
-        timer->start(1000);
+        timer->start(100);
     }
 
     void stop()
@@ -42,13 +42,15 @@ public  slots:
         if(udp_skt->hasPendingDatagrams())
         {
             client_msg.resize((udp_skt->pendingDatagramSize()));
-            udp_skt->readDatagram(client_msg.data(),client_msg.size());
-            QString str=udp_skt->peerAddress().toString();//TODO,why cant I get this address?
+            QHostAddress sender;
+            quint16 senderPort;
+            udp_skt->readDatagram(client_msg.data(),client_msg.size(),&sender,&senderPort);
             prt(info,"get client broadcasted code :%s",msg=client_msg.data());
             if(!strcmp(msg,"pedestrian")){
-                prt(info,"reply client %s with our ip info",str.toStdString().data());
-                send_info_to_client();
-            }
+
+            //    send_info_to_client();
+                send_info_to_client(sender);
+               }
             else{
                 prt(error,"client code :%s NOT MATCH pedestrian,we will not answer",msg=client_msg.data());
             }
@@ -80,6 +82,33 @@ public  slots:
         //broadcast
         udp_skt->writeDatagram(datagram.data(), datagram.size(),
                                QHostAddress::Broadcast, Protocol::CLIENT_REPORTER_PORT);
+#else
+        //send to single ip. problem in windows
+#endif
+    }
+    void send_info_to_client(const QHostAddress &addr)
+    {
+        QByteArray datagram;
+        datagram.clear();
+        QList <QNetworkInterface>list_interface=QNetworkInterface::allInterfaces();
+        foreach (QNetworkInterface i, list_interface) {
+            if(i.name()!="lo"){
+                QList<QNetworkAddressEntry> list_entry=i.addressEntries();
+                foreach (QNetworkAddressEntry e, list_entry) {
+                    if(e.ip().protocol()==QAbstractSocket::IPv4Protocol)
+                    {
+                        datagram.append(QString(e.ip().toString())).append(QString(",")).\
+                                append(QString(e.netmask().toString())).append(QString(",")).append(QString(e.broadcast().toString()));
+                    }
+
+                }
+            }
+        }
+#if 1
+        qDebug()<<"addr :"<<addr.toString();
+        //broadcast
+        udp_skt->writeDatagram(datagram.data(), datagram.size(),
+                               addr, Protocol::CLIENT_REPORTER_PORT);
 #else
         //send to single ip. problem in windows
 #endif
