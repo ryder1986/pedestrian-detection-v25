@@ -253,7 +253,7 @@ public slots:
 private:
     Ui::Form *window;
     ServerInfoSearcher *searcher;
-    ServerOutputRst *rst_rcver;
+    ProcessedDataReciver *rst_rcver;
     Client *clt;
     CameraConfiguration *p_cfg;
     QTreeWidgetItem *p_item_device_root;

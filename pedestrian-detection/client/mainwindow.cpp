@@ -7,7 +7,7 @@ MainWindow::MainWindow(QWidget *parent)
     window->setupUi(this);
     p_cfg=new CameraConfiguration("config.json");
     searcher=new ServerInfoSearcher;
-    rst_rcver=new ServerOutputRst ;
+    rst_rcver=new ProcessedDataReciver ;
     clt=new Client;
     p_video_thread=NULL;
     search_widget=new SearchWidget;

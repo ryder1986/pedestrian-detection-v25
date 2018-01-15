@@ -14,26 +14,14 @@
 #include <thread>
 #include <QThread>
 using namespace std;
-class ServerFinder : public QObject
+class ServerReplyCheckRouting : public QObject
 {
     Q_OBJECT
 
 public slots:
-    void find(    QUdpSocket *udp_skt_find_server) {
-        QString result;
-        /* ... here is the expensive or blocking operation ... */
-
-        int tick=0;
+    void check_reply(    QUdpSocket *udp_skt_find_server) {
         QString str;
         str.clear();
-        int sleep_time=10;
-        //        while(!udp_skt_find_server->hasPendingDatagrams())
-        //        {
-        //            QThread::msleep(sleep_time);
-        //            if(tick++>timeout_seconds*1000/sleep_time){
-        //                return str;
-        //            }
-        //        }
         int try_times=100;
         while(try_times--){
             if(udp_skt_find_server->hasPendingDatagrams()){
@@ -50,8 +38,6 @@ public slots:
             }
             QThread::msleep(10);
         }
-
-        //  emit resultReady(result);
     }
 
 signals:
@@ -66,9 +52,8 @@ private:
 
 class ServerInfoSearcher : public QObject{
     Q_OBJECT
-    //   std::thread *p_find_server_thread;
-    QThread FinderThread;
-    ServerFinder *finder;
+    QThread check_thread;
+    ServerReplyCheckRouting *p_checker;
 
 public:
     ServerInfoSearcher()
@@ -80,15 +65,16 @@ public:
 
         //   connect();
 
-        finder=new ServerFinder;
-        connect(&FinderThread,&QThread::finished,finder,&QObject::deleteLater);
-        connect(this,SIGNAL(begin_search(QUdpSocket*)),finder,SLOT(find(QUdpSocket*)),Qt::QueuedConnection);
-        connect(finder,SIGNAL(resultReady(QString)),this,SLOT(ip_found(QString)),Qt::QueuedConnection);
+        p_checker=new ServerReplyCheckRouting;
+        p_checker->moveToThread(&check_thread);
+        connect(&check_thread,&QThread::finished,p_checker,&QObject::deleteLater);
+        connect(this,SIGNAL(begin_search(QUdpSocket*)),p_checker,SLOT(check_reply(QUdpSocket*)),Qt::QueuedConnection);
+        connect(p_checker,SIGNAL(resultReady(QString)),this,SLOT(ip_found(QString)),Qt::QueuedConnection);
     }
     ~ServerInfoSearcher()
     {
-        FinderThread.quit();
-        FinderThread.wait();
+        check_thread.quit();
+        check_thread.wait();
     }
     void broadcast_info()
     {
@@ -102,7 +88,7 @@ public:
     void search()
     {
 
-        FinderThread.start();
+        check_thread.start();
         emit begin_search(udp_skt_find_server);
     }
 
@@ -126,35 +112,6 @@ public:
         while(times--){
 
         }
-    }
-
-    QString wait_server_info_reply(int timeout_seconds)
-    {
-        int tick=0;
-        QString str;
-        str.clear();
-        int sleep_time=10;
-        //        while(!udp_skt_find_server->hasPendingDatagrams())
-        //        {
-        //            QThread::msleep(sleep_time);
-        //            if(tick++>timeout_seconds*1000/sleep_time){
-        //                return str;
-        //            }
-        //        }
-        int try_times=100;
-        while(try_times--){
-            if(udp_skt_find_server->hasPendingDatagrams()){
-                datagram.resize((udp_skt_find_server->pendingDatagramSize()));
-                udp_skt_find_server->readDatagram(datagram.data(),datagram.size());
-                prt(info,"get server info : %s",datagram.data());
-                server_ip.clear();
-                server_ip.append(datagram.split(',')[0]);
-                prt(info,"ip : %s",server_ip.toStdString().data());
-                ip_list.append(server_ip);
-            }
-            QThread::msleep(10);
-        }
-        return server_ip;
     }
 signals:
     void begin_search( QUdpSocket *udp_skt_find_server);
@@ -187,10 +144,10 @@ private :
     QString server_ip;
     QStringList ip_list;
 };
-class ServerOutputRst: public QObject{
+class ProcessedDataReciver: public QObject{
     Q_OBJECT
 public:
-    ServerOutputRst()
+    ProcessedDataReciver()
     {
         udp_skt_alg_output=new QUdpSocket(this);
         udp_skt_alg_output->bind(Protocol::SERVER_DATA_OUTPUT_PORT,QUdpSocket::ShareAddress);
