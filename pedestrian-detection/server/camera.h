@@ -1,6 +1,6 @@
 #ifndef CAMERA_H
 #define CAMERA_H
-
+#include <QObject>
 #include "config.h"
 #include "pd.h"
 #include "videosrc.h"
@@ -9,8 +9,11 @@
 #include "camera.h"
 //#include "server.h"
 //class ProcessedDataSender;
-class Camera
+#include <thread>
+using namespace std;
+class Camera:public QObject
 {
+    Q_OBJECT
     //   friend class  ProcessedDataSender;
     typedef struct data{
         VideoSrc *p_src;
@@ -25,8 +28,9 @@ class Camera
         //   int index;
     }data_t;
     data_t d;
-    thread *p_thread;
+    std::thread *p_thread;
     typedef CameraConfiguration::camera_config_t camera_config;
+    QTimer tmr;
 
     //  VideoProcessor *_prc;
 public:
@@ -95,7 +99,9 @@ public:
         d.ts=this;
         d.url=cfg.ip;
         d.quit=false;
-        p_thread=new thread(fun,&d);
+        p_thread=new std::thread(fun,&d);
+        connect(&tmr,SIGNAL(timeout()),this,SLOT(check_rst()));
+        tmr.start(10);
         //     d.sender=ProcessedDataSender::get_instance();
     }
     ~Camera()
@@ -106,20 +112,33 @@ public:
         delete p_thread;
         // delete d.sender;
     }
-    QByteArray get_rst()
+//    QByteArray get_rst()
+//    {
+//        QByteArray ba;
+//        ba.clear();
+//        d.lock.lock();
+//        ba=d.rst;
+//        d.rst.clear();
+//        d.lock.unlock();
+//        return ba;
+//    }
+public slots:
+    void check_rst()
     {
-        QByteArray ba;
-        ba.clear();
+      //  QByteArray ba;
+      //  ba.clear();
         d.lock.lock();
-        ba=d.rst;
+      //  ba=d.rst;
+        if(d.rst.length()>0)
+            emit send_rst(d.rst);
         d.rst.clear();
         d.lock.unlock();
-        return ba;
     }
 
 signals:
-    void work_done(QByteArray process_rst);
-};
+ //   void work_done(QByteArray process_rst);
+    void send_rst(QByteArray process_rst);
+   };
 
 class CameraManager{
     int test_int;
@@ -162,23 +181,23 @@ public:
         return cameras.size();
     }
 
-    bool try_get_data(int index,QByteArray &ba)
-    {
-        bool ret=false;
-        if(index<0)
-            return false;
-        cfg_lock.lock();
-        ba=cameras[index]->get_rst();
-        if(ba.length()){
-            ret= true;
-            prt(debug,"sending cam %d rst",index);
-        }else{
-            ret= false;
-            prt(warning,"sending cam %d rst error",index);
-        }
-        cfg_lock.unlock();
-        return ret;
-    }
+//    bool try_get_data(int index,QByteArray &ba)
+//    {
+//        bool ret=false;
+//        if(index<0)
+//            return false;
+//        cfg_lock.lock();
+//        ba=cameras[index]->get_rst();
+//        if(ba.length()){
+//            ret= true;
+//            prt(debug,"sending cam %d rst",index);
+//        }else{
+//            ret= false;
+//            prt(warning,"sending cam %d rst error",index);
+//        }
+//        cfg_lock.unlock();
+//        return ret;
+//    }
 
     void test()
     {
@@ -321,7 +340,7 @@ public:
     }
     CameraConfiguration *p_cfg;
 private:
-
+public:
     QList<Camera *> cameras;
 
 };

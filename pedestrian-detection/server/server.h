@@ -107,9 +107,9 @@ public:
         //   udp_skt=new QUdpSocket();
         client_addr=skt->peerAddress();
         prt(info,"socket state %d",skt->state());
-        timer=new QTimer(this);
-        connect(timer,SIGNAL(timeout()),this,SLOT(check_output()));
-        timer->start(10);
+        //   timer=new QTimer(this);
+        //  connect(timer,SIGNAL(timeout()),this,SLOT(check_output()));
+        // timer->start(10);
         //  connect(skt,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(test()));
         //                connect(skt,SIGNAL(aboutToClose()),this,SLOT(test()));
         //                connect(skt,SIGNAL(disconnected()),this,SLOT(test()));
@@ -117,7 +117,7 @@ public:
     ~ClientSession()
     {
         close_output();
-        delete timer;
+        //    delete timer;
         //   //    disconnect(timer,SIGNAL(timeout()),this,SLOT(send_rst_to_client()));
         // delete udp_skt;
     }
@@ -125,10 +125,17 @@ public:
 public slots:
     void open_output(int index)
     {
+        CameraManager &mgr=  CameraManager::GetInstance();
+        if(index>0)
+            disconnect(mgr.cameras[index-1],SIGNAL(send_rst(QByteArray)),this,SLOT(handle_algout(QByteArray)));
         focus_index=index;
+        connect(mgr.cameras[focus_index-1],SIGNAL(send_rst(QByteArray)),this,SLOT(handle_algout(QByteArray)));
     }
     void close_output()
     {
+        CameraManager &mgr=  CameraManager::GetInstance();
+        if(focus_index>0)
+            disconnect(mgr.cameras[focus_index-1],SIGNAL(send_rst(QByteArray)),this,SLOT(handle_algout(QByteArray)));
         focus_index=0;
     }
     bool camera_focused()
@@ -138,25 +145,31 @@ public slots:
         if(focus_index<0)
             return false;
     }
-
-    void check_output()
+    void handle_algout(QByteArray out)
     {
-
+        prt(info,"out");
         ProcessedDataSender *sender=ProcessedDataSender::get_instance();
-        CameraManager &mgr=  CameraManager::GetInstance();
-        QByteArray ba;
-        if(camera_focused()&&focus_index<=mgr.cam_num()){
-            //prt(info,"checking camera %d",focus_index);
-            if(mgr.try_get_data(focus_index-1,ba)){
-                sender->send(ba,client_addr);
-            }
-        }else{
-            if(camera_focused()){
-                prt(debug,"close camera %d output",focus_index);
-                close_output();
-            }
-        }
+        sender->send(out,client_addr);
     }
+
+    //    void check_output()
+    //    {
+
+    //        ProcessedDataSender *sender=ProcessedDataSender::get_instance();
+    //        CameraManager &mgr=  CameraManager::GetInstance();
+    //        QByteArray ba;
+    //        if(camera_focused()&&focus_index<=mgr.cam_num()){
+    //            //prt(info,"checking camera %d",focus_index);
+    //            if(mgr.try_get_data(focus_index-1,ba)){
+    //                sender->send(ba,client_addr);
+    //            }
+    //        }else{
+    //            if(camera_focused()){
+    //                prt(debug,"close camera %d output",focus_index);
+    //                close_output();
+    //            }
+    //        }
+    //    }
 
     void socket_error()
     {
