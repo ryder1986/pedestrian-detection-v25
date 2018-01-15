@@ -260,7 +260,19 @@ public slots:
 //            QMessageBox  *message=new QMessageBox(QMessageBox::Warning,"Information","update?",QMessageBox::Yes|QMessageBox::No,NULL);
 //            connect(message,SIGNAL(accepted()),this,SLOT(clear_server_dialog()));
 //            message->show();
-            box1->show();
+          //  box1->show();
+            QMessageBox::StandardButton reply;
+            reply = QMessageBox::question(this, "Title", "update?", QMessageBox::Yes | QMessageBox::No);
+            if(reply == QMessageBox::Yes)
+            {
+                qDebug()<<"update";
+                clear_server_dialog();
+            }
+            else
+            {
+
+            }
+
            // window->treeWidget_devices->clear();
         }
             break;
