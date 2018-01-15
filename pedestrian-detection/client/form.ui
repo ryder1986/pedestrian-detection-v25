@@ -83,7 +83,7 @@
           <widget class="VideoWidget" name="openGLWidget"/>
          </item>
          <item>
-          <widget class="QLineEdit" name="lineEdit_pic_info"/>
+          <widget class="QLineEdit" name="lineEdit_playing_state"/>
          </item>
         </layout>
        </widget>

@@ -16,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(clt,SIGNAL(server_msg(QByteArray,int )),this,SLOT(handle_msg(QByteArray,int )),Qt::QueuedConnection);
     box1=new QMessageBox(QMessageBox::Warning,"Information","update?",QMessageBox::Yes|QMessageBox::No,NULL);
     connect(box1,SIGNAL(accepted()),this,SLOT(clear_server_dialog()));
+
 }
 
 MainWindow::~MainWindow()
@@ -99,13 +100,13 @@ void MainWindow::on_treeWidget_devices_doubleClicked(const QModelIndex &index)
                 open_camera_output(selected_camera_index);
                 if(p_video_thread)
                 {
-
                     delete p_video_thread;
                     p_video_thread=NULL;
                 }
                 //  else
                 p_video_thread=new VideoThread(url,window->openGLWidget);
                 connect(rst_rcver,SIGNAL(send_rst(QByteArray)),p_video_thread,SLOT(get_data(QByteArray)));
+                connect(p_video_thread,SIGNAL(check_rst(int,int)),this,SLOT(show_process_record(int,int)),Qt::DirectConnection);
                 //                f->openGLWidget->render_set_mat(mat);
                 //                f->openGLWidget->update();
                 // window->openGLWidget->start(p_item_device_current->text(0));//TODO:start playing

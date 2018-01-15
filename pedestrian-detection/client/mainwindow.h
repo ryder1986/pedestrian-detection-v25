@@ -19,22 +19,30 @@ class VideoThread:public QObject{
         VideoWidget *video_render;
         QByteArray rst;
         mutex lock;
+        int record_frames;
+        int record_rects;
     }data_t;
     data_t d;
 
+
 private:
-    static void fun(data_t *p_data)
+    static void work_fun(data_t *p_data)
     {
         p_data->p_src=new VideoSrc(p_data->url.toStdString().data());
+        p_data->record_frames=0;
+        p_data->record_rects=0;
         Mat mt;
         bool flg;
         while(!p_data->quit){
 
             flg=p_data->p_src->fetch_frame(mt);
             if(flg){
+                p_data->record_frames++;
                 p_data->lock.lock();
-                if(p_data->rst.size()>0)
+                if(p_data->rst.size()>0){
                     p_data->video_render->set_rects(p_data->rst);
+                    p_data->record_rects++;
+                }
                 p_data->rst.clear();
                 p_data->lock.unlock();
                 p_data->video_render->update_mat(mt);
@@ -52,16 +60,32 @@ public:
         d.p_src=NULL;
         d.url=url;
         d.video_render=widget;
-        p_thread=new std::thread(fun,&d);
+        p_thread=new std::thread(work_fun,&d);
+        p_timer=new QTimer;
+        connect(p_timer,SIGNAL(timeout()),this,SLOT(check_fun()));
+        p_timer->start(1000);
     }
     ~VideoThread()
     {
+        delete p_timer;
         d.quit=true;
         p_thread->join();;
         delete p_thread;
         p_thread;
     }
 public slots:
+    void check_fun()
+    {
+
+        d.lock.lock();
+        // prt(info,"send %d %d ",d.record_frames,d.record_rects);
+        emit check_rst(d.record_frames,d.record_rects);
+
+        d.record_frames=0;
+        d.record_rects=0;
+        d.lock.unlock();
+    }
+
     void get_data(QByteArray rst)
     {
         prt(debug,"get %s",rst.toStdString().data());
@@ -83,9 +107,12 @@ public slots:
         }
 #endif
     }
+signals:
+    void check_rst(int frames,int rcts);
 
 private:
     std::thread *p_thread;
+    QTimer *p_timer;
     // VideoProcessor *p_pro;
 
 };
@@ -183,6 +210,15 @@ private slots:
         QByteArray rst=clt->call_server(buf,len);
     }
 public slots:
+    void show_process_record(int frames,int rcts)
+    {
+        prt(debug,"frame rate %d, results rate %d",frames,rcts);
+        QString txt;
+        txt.append("FRAME RATE:").append(QString::number(frames)).append('\t');
+        txt.append("ALG RATE:").append(QString::number(rcts));
+        window->lineEdit_playing_state->setText(txt);
+    }
+
     void connect_server(QString ip)
     {
         prt(info,"connect %s",ip.toStdString().data());

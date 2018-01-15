@@ -21,9 +21,11 @@ SearchWidget::~SearchWidget()
 void SearchWidget::on_tableWidget_doubleClicked(const QModelIndex &index)
 {
 
-   int row=index.row();
-   QTableWidgetItem *i=ui->tableWidget->item(row,0);
-   prt(info,"%s",i->text().toStdString().data());
-   emit select_ip(i->text());
-   this->hide();
+    int row=index.row();
+    QTableWidgetItem *i=ui->tableWidget->item(row,0);
+    if(i){
+        prt(info,"%s",i->text().toStdString().data());
+        emit select_ip(i->text());
+        this->hide();
+    }
 }
