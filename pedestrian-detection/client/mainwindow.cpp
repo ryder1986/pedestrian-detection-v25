@@ -104,7 +104,11 @@ void MainWindow::on_treeWidget_devices_doubleClicked(const QModelIndex &index)
                     p_video_thread=NULL;
                 }
                 //  else
-                p_video_thread=new VideoThread(url,window->openGLWidget);
+                VideoThread::init_data_t dat;
+                dat.url=url;
+                dat.render_init_data=(void *)&p_cfg->cfg.detect_area;
+               // p_video_thread=new VideoThread(url,window->openGLWidget);
+                p_video_thread=new VideoThread(dat,window->openGLWidget);
                 connect(rst_rcver,SIGNAL(send_rst(QByteArray)),p_video_thread,SLOT(get_data(QByteArray)));
                 connect(p_video_thread,SIGNAL(check_rst(int,int)),this,SLOT(show_process_record(int,int)),Qt::DirectConnection);
                 //                f->openGLWidget->render_set_mat(mat);
@@ -147,5 +151,11 @@ void MainWindow::on_treeWidget_devices_customContextMenuRequested(const QPoint &
 
     cmenu->exec(QCursor::pos());
 #endif
+
+}
+
+void MainWindow::on_openGLWidget_customContextMenuRequested(const QPoint &pos)
+{
+    prt(info,"%d,%d",pos.x(),pos.y());
 
 }

@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QMouseEvent>
 #include "ui_form.h"
 #include "client.h"
 //#include "videoprocessor.h"
@@ -12,6 +13,12 @@
 using namespace std ;
 class VideoThread:public QObject{
     Q_OBJECT
+public:
+    typedef struct init_data{
+        QString url;
+        void *render_init_data;
+    }init_data_t;
+
     typedef struct data{
         VideoSrc *p_src;
         QString url;
@@ -21,7 +28,8 @@ class VideoThread:public QObject{
         mutex lock;
         int record_frames;
         int record_rects;
-     //   void *private_realtime_data;
+        void *picture_init_data;
+        void *picture_extra_data;
     }data_t;
     data_t d;
 
@@ -34,6 +42,7 @@ private:
         p_data->record_rects=0;
         Mat mt;
         bool flg;
+        p_data->video_render->set_init_data(p_data->picture_init_data);
         while(!p_data->quit){
 
             flg=p_data->p_src->fetch_frame(mt);
@@ -61,6 +70,19 @@ public:
         d.p_src=NULL;
         d.url=url;
         d.video_render=widget;
+        d.picture_init_data=NULL;
+        p_thread=new std::thread(work_fun,&d);
+        p_timer=new QTimer;
+        connect(p_timer,SIGNAL(timeout()),this,SLOT(check_fun()));
+        p_timer->start(1000);
+    }
+    VideoThread(init_data_t init_d,VideoWidget *widget)
+    {
+        d.quit=false;
+        d.p_src=NULL;
+        d.url=init_d.url;
+        d.video_render=widget;
+        d.picture_init_data=init_d.render_init_data;
         p_thread=new std::thread(work_fun,&d);
         p_timer=new QTimer;
         connect(p_timer,SIGNAL(timeout()),this,SLOT(check_fun()));
@@ -112,6 +134,7 @@ signals:
     void check_rst(int frames,int rcts);
 
 private:
+
     std::thread *p_thread;
     QTimer *p_timer;
     // VideoProcessor *p_pro;
@@ -210,6 +233,8 @@ private slots:
         int len=Protocol::encode_output_request(buf,index);//encode buffer
         QByteArray rst=clt->call_server(buf,len);
     }
+    void on_openGLWidget_customContextMenuRequested(const QPoint &pos);
+
 public slots:
     void show_process_record(int frames,int rcts)
     {

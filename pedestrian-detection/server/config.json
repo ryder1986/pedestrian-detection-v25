@@ -10,7 +10,7 @@
             "port": 5678
         }
     ],
-    "detect_area":"111,111 222,111 111,222 222,222 ",
+    "detect_area":"111,111,222,222 ",
     "camera_total_number": 2
 }
 
