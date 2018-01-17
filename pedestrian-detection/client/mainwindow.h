@@ -21,6 +21,7 @@ class VideoThread:public QObject{
         mutex lock;
         int record_frames;
         int record_rects;
+     //   void *private_realtime_data;
     }data_t;
     data_t d;
 
@@ -267,6 +268,7 @@ public slots:
             {
                 qDebug()<<"update";
                 clear_server_dialog();
+                on_pushButton_search_clicked();
             }
             else
             {
@@ -277,14 +279,21 @@ public slots:
         }
             break;
         case Protocol::CMD::GET_CONFIG:
+            {
             p_cfg->set_config( rst);
             //handle tree list
             window->treeWidget_devices->clear();
-            p_item_device_root=new QTreeWidgetItem(QStringList(clt->server_ip));
+            QString lst;
+            lst.append(p_cfg->cfg.name);
+            lst.append("(");
+            lst.append(clt->server_ip);
+            lst.append(")");
+            p_item_device_root=new QTreeWidgetItem(QStringList(lst));
             window->treeWidget_devices->addTopLevelItem(p_item_device_root);
             for(int i=0;i<p_cfg->cfg.camera_amount;i++){
                 QTreeWidgetItem *itm1=new QTreeWidgetItem(QStringList(p_cfg->cfg.camera[i].ip));
                 p_item_device_root->addChild(itm1);
+            }
             }
             break;
         default:

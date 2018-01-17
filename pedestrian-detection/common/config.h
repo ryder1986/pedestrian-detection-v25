@@ -92,7 +92,9 @@ public:
     typedef struct config{
         int camera_amount;
         QList<camera_config_t> camera;
-    }config_t;
+        QString name;
+        QString detect_area;
+         }config_t;
     config_t cfg;
 
     CameraConfiguration(QString name)
@@ -176,6 +178,8 @@ private:
         config_t data;
         data.camera.clear();
         data.camera_amount=get_int(root_obj,"camera_total_number");
+        data.name=get_string(root_obj,"device_name");
+        data.detect_area=get_string(root_obj,"detect_area");
         QJsonArray cams=get_child_array(root_obj,"camera");
 
         foreach (QJsonValue v, cams) {
@@ -196,6 +200,8 @@ private:
         QJsonObject root_obj;
 
         root_obj["camera_total_number"]=data.camera_amount;
+        root_obj["device_name"]=data.name;
+        root_obj["detect_area"]=data.detect_area;
         QJsonArray cams;
 
         for(int i=0;i<data.camera_amount;i++)
