@@ -218,7 +218,50 @@ private slots:
         memcpy(buf+Protocol::HEAD_LENGTH,setting.data(),setting.length());
         QByteArray rst=clt->call_server(buf,len);//talk to server
         // itm->setFlags(!Qt::ItemIsEditable | itm_root->flags()) ;
-        p_item_device_current->setFlags(  p_item_device_current->flags() & ~Qt::ItemIsEditable) ;
+  //      p_item_device_current->setFlags(  p_item_device_current->flags() & ~Qt::ItemIsEditable) ;
+    }
+
+    void confirm_camera_modify(bool checked)
+    {
+        int now=p_item_device_current->parent()->indexOfChild(p_item_device_current);
+        char buf[2000];
+        QString ip=p_item_device_current->text((0));
+        p_cfg->modify_camera(ip,now+1);
+        QByteArray setting=p_cfg->get_config();//get new config from local database
+        int len=Protocol::encode_modcam_request(buf,setting.length(),now+1);//encode buffer
+        memcpy(buf+Protocol::HEAD_LENGTH,setting.data(),setting.length());
+        QByteArray rst=clt->call_server(buf,len);//talk to server
+        preview_camera(1);
+        // itm->setFlags(!Qt::ItemIsEditable | itm_root->flags()) ;
+    //    p_item_device_current->setFlags(  p_item_device_current->flags() & ~Qt::ItemIsEditable) ;
+    }
+    void preview_camera(bool checked)
+    {
+        int now=p_item_device_current->parent()->indexOfChild(p_item_device_current);
+        selected_camera_index=now+1;
+
+        prt(info,"playing index change to %d",selected_camera_index);
+        if(now<p_cfg->cfg.camera_amount){
+            QString url=p_item_device_current->text(0);
+            qDebug()<<"get "<<url;
+            open_camera_output(selected_camera_index);
+            if(p_video_thread)
+            {
+                delete p_video_thread;
+                p_video_thread=NULL;
+            }
+            //  else
+            VideoThread::init_data_t dat;
+            dat.url=url;
+            dat.render_init_data=(void *)&p_cfg->cfg.camera[now].detect_area;
+           // p_video_thread=new VideoThread(url,window->openGLWidget);
+            p_video_thread=new VideoThread(dat,window->openGLWidget);
+            connect(rst_rcver,SIGNAL(send_rst(QByteArray)),p_video_thread,SLOT(get_data(QByteArray)));
+            connect(p_video_thread,SIGNAL(check_rst(int,int)),this,SLOT(show_process_record(int,int)),Qt::DirectConnection);
+            //                f->openGLWidget->render_set_mat(mat);
+            //                f->openGLWidget->update();
+            // window->openGLWidget->start(p_item_device_current->text(0));//TODO:start playing
+        }
     }
     void submit_camera_deling(int del_index)
     {
@@ -318,6 +361,7 @@ public slots:
             for(int i=0;i<p_cfg->cfg.camera_amount;i++){
                 QTreeWidgetItem *itm1=new QTreeWidgetItem(QStringList(p_cfg->cfg.camera[i].ip));
                 p_item_device_root->addChild(itm1);
+                   itm1->setFlags(Qt::ItemIsEditable | itm1->flags()) ;
             }
             }
             break;

@@ -34,6 +34,11 @@ class Camera:public QObject
 
     //  VideoProcessor *_prc;
 public:
+    QString get_url()
+    {
+        return d.url;
+    }
+
     static void fun(data_t *p_data)
     {
 
@@ -328,14 +333,17 @@ public:
         cfg_lock.lock();
         p_cfg->set_config(cfg_buf);
         prt(info,"modify cam  %d",index);
-        //        while(true){
-        //            if(0==cameras[index-1]->try_restart(p_cfg->cfg.camera[p_cfg->cfg.camera_amount-1]))
-        //                break;
-        //            else
-        //            {
-        //                prt(info,"restarting camera %d",index);
-        //            }
-        //        }
+
+        if(cameras[index-1]->get_url().compare(p_cfg->cfg.camera[index-1].ip))
+        {
+            prt(info, "url modifyed");
+            delete cameras[index-1];
+            cameras[index-1]=new Camera(p_cfg->cfg.camera[index-1]);
+
+        }else{
+            prt(info, "alg modifyed");
+        }
+
         cfg_lock.unlock();
     }
     CameraConfiguration *p_cfg;

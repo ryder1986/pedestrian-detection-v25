@@ -3,14 +3,15 @@
     "camera": [
         {
             "ip": "rtsp://192.168.1.216:8554/test1",
-            "port": 1234
+            "port": 1234,
+	    "detect_area":"111,111,222,222 "
         },
         {
             "ip": "rtsp://192.168.1.216:8554/test1",
-            "port": 5678
+            "port": 5678,
+	    "detect_area":"111,111,222,222 "
         }
     ],
-    "detect_area":"111,111,222,222 ",
     "camera_total_number": 2
 }
 

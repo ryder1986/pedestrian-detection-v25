@@ -270,6 +270,12 @@ public slots:
                 update_client();
             }else{
                 prt(info,"modify cam %d ",cam_index);
+
+                bta.clear();
+                bta.append(src_buf+Protocol::HEAD_LENGTH,pkg_len);//cfg fill into bta
+                mgr.mod_camera(bta.data(),cam_index);//set config and do modify
+                memcpy(dst_buf,src_buf,Protocol::HEAD_LENGTH);
+                ret_size= Protocol::HEAD_LENGTH;
                 emit session_operation(SESSION_REQUEST::WRITE_DONE,this,rpl);
             }
             break;

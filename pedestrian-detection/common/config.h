@@ -87,13 +87,14 @@ public:
     FileDataBase *p_database;
     typedef struct camera_config{
         QString ip;
+        QString detect_area;
         int port;
     }camera_config_t;
     typedef struct config{
         int camera_amount;
         QList<camera_config_t> camera;
         QString name;
-        QString detect_area;
+
          }config_t;
     config_t cfg;
 
@@ -144,6 +145,15 @@ public:
         cfg.camera.append(tmp);
         save();
     }
+    void modify_camera(QString url,int index)
+    {
+       // cfg.camera_amount++;
+     //   camera_config_t tmp;
+//        tmp.ip=url;
+//        tmp.port=1234;
+        cfg.camera[index-1].ip=url;
+        save();
+    }
     //    camera_config_t get_camera_config(int index)
     //    {
     //        if(index>0&&index<=cfg.camera_amount)
@@ -179,7 +189,7 @@ private:
         data.camera.clear();
         data.camera_amount=get_int(root_obj,"camera_total_number");
         data.name=get_string(root_obj,"device_name");
-        data.detect_area=get_string(root_obj,"detect_area");
+
         QJsonArray cams=get_child_array(root_obj,"camera");
 
         foreach (QJsonValue v, cams) {
@@ -187,6 +197,7 @@ private:
             camera_config_t t;
             t.ip=get_string(obj,"ip");
             t.port=get_int(obj,"port");
+            t.detect_area=get_string(obj,"detect_area");
             data.camera.append(t);
         }
         return data;
@@ -201,7 +212,6 @@ private:
 
         root_obj["camera_total_number"]=data.camera_amount;
         root_obj["device_name"]=data.name;
-        root_obj["detect_area"]=data.detect_area;
         QJsonArray cams;
 
         for(int i=0;i<data.camera_amount;i++)
@@ -209,6 +219,7 @@ private:
             QJsonObject o;
             o["ip"]=data.camera[i].ip;
             o["port"]=data.camera[i].port;
+            o["detect_area"]=data.camera[i].detect_area;
             cams.append(o);
         }
         root_obj["camera"]=cams;

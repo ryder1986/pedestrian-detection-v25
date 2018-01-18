@@ -324,10 +324,7 @@ private:
 //        }
         qDebug()<<e->pos().x();
 
-    }
-    void mouseDoubleClickEvent(QMouseEvent *e)
-    {
-        click_record++;
+
         int x,y,w,h;
         int new_x=e->x();
         int new_y=e->y();
@@ -337,12 +334,33 @@ private:
           if(get_area(x,y,w,h)){
                new_w=new_x-x;
                new_h=new_y-y;
-              if(click_record%2){
+              if(e->button()!=Qt::RightButton){
                 set_area(new_x,new_y,w,h);
               }else{
                 set_area(x,y,new_w,new_h);
               }
           }
+
+
+    }
+    void mouseDoubleClickEvent(QMouseEvent *e)
+    {
+//        click_record++;
+//        int x,y,w,h;
+//        int new_x=e->x();
+//        int new_y=e->y();
+//        int new_w;
+//        int new_h;
+
+//          if(get_area(x,y,w,h)){
+//               new_w=new_x-x;
+//               new_h=new_y-y;
+//              if(click_record%2){
+//                set_area(new_x,new_y,w,h);
+//              }else{
+//                set_area(x,y,new_w,new_h);
+//              }
+//          }
     }
     void mouseReleaseEvent(QMouseEvent *)
     {

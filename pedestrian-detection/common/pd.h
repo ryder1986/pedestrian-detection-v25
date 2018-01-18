@@ -145,6 +145,15 @@ public :
         pkg_set_ret(buf,RET_SUCCESS);
         return HEAD_LENGTH+len;
     }
+    static int encode_modcam_request(char *buf,int len,int index){
+        //   pkg_set_len(ba);
+        memset(buf,0,Pd::BUFFER_LENGTH);
+        pkg_set_len(buf,len);
+        pkg_set_version(buf,VERSION);
+        pkg_set_op(buf,MOD_CAMERA);
+        pkg_set_ret(buf,index);
+        return HEAD_LENGTH+len;
+    }
     static int encode_output_request(char *buf,int index){
         //   pkg_set_len(ba);
         memset(buf,0,Pd::BUFFER_LENGTH);

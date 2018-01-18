@@ -89,7 +89,7 @@ void MainWindow::on_treeWidget_devices_doubleClicked(const QModelIndex &index)
     if(p_item_device_current){
         if(!p_item_device_current->parent()){//root
         }else{//child
-
+#if 0
             int now=p_item_device_current->parent()->indexOfChild(p_item_device_current);
             selected_camera_index=now+1;
 
@@ -115,6 +115,7 @@ void MainWindow::on_treeWidget_devices_doubleClicked(const QModelIndex &index)
                 //                f->openGLWidget->update();
                 // window->openGLWidget->start(p_item_device_current->text(0));//TODO:start playing
             }
+#endif
         }
     }
 }
@@ -126,18 +127,23 @@ void MainWindow::on_treeWidget_devices_customContextMenuRequested(const QPoint &
     if(p_item_device_current){
         if(!p_item_device_current->parent()){
             QMenu *cmenu = new QMenu(window->treeWidget_devices);
-            QAction *action_add = cmenu->addAction("add");
+            QAction *action_add = cmenu->addAction("add new camera");
             connect(action_add, SIGNAL(triggered(bool)), this, SLOT(add_camera(bool)));
             cmenu->exec(QCursor::pos());
         }else{
             QMenu *cmenu = new QMenu(window->treeWidget_devices);
-            QAction *action_del = cmenu->addAction("del");
+            QAction *action_del = cmenu->addAction("del this camera");
 
             int now=p_item_device_current->parent()->indexOfChild(p_item_device_current);
             if(now+1>p_cfg->cfg.camera_amount)
             {
-                QAction *action_submit = cmenu->addAction("submit");
+                QAction *action_submit = cmenu->addAction("confirm add this cammera");
                 connect(action_submit, SIGNAL(triggered(bool)), this, SLOT(submit_camera_adding(bool)));
+            }else{
+                QAction *action_mod = cmenu->addAction("confirm modified cammera");
+                connect(action_mod, SIGNAL(triggered(bool)), this, SLOT(confirm_camera_modify(bool)));
+                QAction *action_preview = cmenu->addAction("preview cammera");
+                connect(action_preview, SIGNAL(triggered(bool)), this, SLOT(preview_camera(bool)));
             }
             connect(action_del, SIGNAL(triggered(bool)), this, SLOT(del_camera(bool)));
             cmenu->exec(QCursor::pos());
